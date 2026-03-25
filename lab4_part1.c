@@ -56,14 +56,35 @@
  
  /************************* Global Variables ***********************************/
  
-// GPIO button instance and device IDs
+// GPIO button instance and IDs
  XGpio BTNInst;
+#if defined(XPAR_GPIO_INPUTS_DEVICE_ID)
 #define EMERGENCY_BUTTON_DEVICE_ID XPAR_GPIO_INPUTS_DEVICE_ID
+#elif defined(XPAR_GPIO_INPUTS_BASEADDR)
+#define EMERGENCY_BUTTON_DEVICE_ID XPAR_GPIO_INPUTS_BASEADDR
+#else
+#define EMERGENCY_BUTTON_DEVICE_ID 0U
+#endif
  
-// GPIO RGB LED instance and device ID
+// GPIO RGB LED instance and IDs
  XGpio Red_RGBInst;
+#if defined(XPAR_GPIO_LEDS_DEVICE_ID)
 #define RGB_LED_DEVICE_ID XPAR_GPIO_LEDS_DEVICE_ID
+#elif defined(XPAR_PMOD_RGB_DEVICE_ID)
+#define RGB_LED_DEVICE_ID XPAR_PMOD_RGB_DEVICE_ID
+#elif defined(XPAR_GPIO_LEDS_BASEADDR)
+#define RGB_LED_DEVICE_ID XPAR_GPIO_LEDS_BASEADDR
+#else
+#define RGB_LED_DEVICE_ID 0U
+#endif
+
+#if defined(XPAR_STEPPER_MOTOR_DEVICE_ID)
 #define PMOD_MOTOR_DEVICE_ID XPAR_STEPPER_MOTOR_DEVICE_ID
+#elif defined(XPAR_STEPPER_MOTOR_BASEADDR)
+#define PMOD_MOTOR_DEVICE_ID XPAR_STEPPER_MOTOR_BASEADDR
+#else
+#define PMOD_MOTOR_DEVICE_ID 0U
+#endif
  
  // The number of positions/delays which can be sequenced
  #define SEQUENCE_LENGTH 10
