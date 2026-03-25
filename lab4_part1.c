@@ -66,7 +66,7 @@ XGpio Red_RGBInst;
 
 #define PMOD_MOTOR_BASEADDR                 XPAR_STEPPER_MOTOR_BASEADDR
 
-#define RGB_LED_BASEADDR					XPAR_PMOD_RGB_DEVICE_ID
+#define RGB_LED_BASEADDR					XPAR_GPIO_LEDS_BASEADDR
 
 // The number of positions/delays which can be sequenced
 #define SEQUENCE_LENGTH 10
@@ -97,7 +97,7 @@ int main (void)
 	//------------------------------------------------------
 
 	// Initialize the PMOD for motor signals (JC PMOD is being used)
-	status = XGpio_Initialize(&PModMotorInst, PMOD_MOTOR_DEVICE_ID);
+	status = XGpio_Initialize(&PModMotorInst, PMOD_MOTOR_BASEADDR);
 	if(status != XST_SUCCESS){
 	xil_printf("GPIO Initialization for PMOD unsuccessful.\r\n");
 	return XST_FAILURE;
@@ -137,7 +137,6 @@ int main (void)
 	motor_parameters.rotational_speed = 500;
 	motor_parameters.rotational_acceleration = 150;
 	motor_parameters.rotational_deceleration = 150;
-	motor_parameters.step_type = 0;
 
 	xil_printf("\nStepper motor Initialization Complete! Operational parameters can be changed below:\n\n");
 
@@ -443,6 +442,9 @@ static void _Task_Motor( void *pvParameters ){
 		for(int i = 0; i < sequenceIndex; i++){
 			XGpio_DiscreteWrite(&Red_RGBInst, 1, 0x02);
 			Stepper_moveToPositionInSteps(positionSequence[i][0]);
+            while(!Stepper_motionComplete()){
+                vTaskDelay(1);
+            }
 			Stepper_disableMotor();
 			XGpio_DiscreteWrite(&Red_RGBInst, 1, 0x00);
 
