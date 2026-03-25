@@ -62,11 +62,14 @@
  
  //GPIO RGB led Instance and DEVICE ID
  XGpio Red_RGBInst;
- #define RGB_LED_BASEADDR					XPAR_GPIO_LEDS_BASEADDR
+#if defined(XPAR_PMOD_RGB_DEVICE_ID)
+#define RGB_LED_BASEADDR					XPAR_PMOD_RGB_DEVICE_ID
+#else
+#define RGB_LED_BASEADDR					XPAR_GPIO_LEDS_BASEADDR
+#endif
+#define RGB_LED_CHANNEL                     2
  
  #define PMOD_MOTOR_BASEADDR                 XPAR_STEPPER_MOTOR_BASEADDR
- 
- #define RGB_LED_BASEADDR					XPAR_GPIO_LEDS_BASEADDR
  
  // The number of positions/delays which can be sequenced
  #define SEQUENCE_LENGTH 10
@@ -85,7 +88,6 @@
  int positionSequence[SEQUENCE_LENGTH][2] = {{NO_OF_STEPS_PER_REVOLUTION_FULL_DRIVE, 0}}; // position-delay array
  int sequenceIndex = 0; // the number of position-delay sequences
  int loop_count = 1; // the number of times to repeat the position-delay sequence
-volatile _Bool emergencyStopDisablePending = FALSE;
  
  //----------------------------------------------------
  // MAIN FUNCTION
@@ -130,7 +132,7 @@ volatile _Bool emergencyStopDisablePending = FALSE;
 	 // Set all buttons direction to inputs
 	 XGpio_SetDataDirection(&BTNInst, 1, 0xFF);
 	 // Set the RGB LED direction to output
-	 XGpio_SetDataDirection(&Red_RGBInst, 1, 0x00);
+	 XGpio_SetDataDirection(&Red_RGBInst, RGB_LED_CHANNEL, 0x00);
  
  
 	 // Initialization of motor parameter values here
@@ -441,17 +443,13 @@ volatile _Bool emergencyStopDisablePending = FALSE;
 		 Stepper_setCurrentPositionInSteps(read_motor_parameters_from_queue->currentposition_in_steps);
  
 		 for(int i = 0; i < sequenceIndex; i++){
-			 XGpio_DiscreteWrite(&Red_RGBInst, 1, 0x02);
+			 XGpio_DiscreteWrite(&Red_RGBInst, RGB_LED_CHANNEL, 0x02);
 			 Stepper_moveToPositionInSteps(positionSequence[i][0]);
 			 while(!Stepper_motionComplete()){
 				 vTaskDelay(1);
 			 }
-			if(emergencyStopDisablePending){
-				Stepper_disableMotor();
-				emergencyStopDisablePending = FALSE;
-			}
 			 Stepper_disableMotor();
-			 XGpio_DiscreteWrite(&Red_RGBInst, 1, 0x00);
+			 XGpio_DiscreteWrite(&Red_RGBInst, RGB_LED_CHANNEL, 0x00);
  
 			 if(positionSequence[i][1] > 0){
 				 vTaskDelay(pdMS_TO_TICKS(positionSequence[i][1]));
@@ -502,14 +500,13 @@ volatile _Bool emergencyStopDisablePending = FALSE;
 			 //Inside an infinite loop, flash the Red light on RGB led at 2Hz.
 			 //The Object Instance for RGB led is "Red_RGBInst".
  
-			emergencyStopDisablePending = TRUE;
-			Stepper_SetupStop();
+			 Stepper_SetupStop();
 			 sequenceIndex = 0;
  
 			 while(1){
-				 XGpio_DiscreteWrite(&Red_RGBInst, 1, 0x04);
+				 XGpio_DiscreteWrite(&Red_RGBInst, RGB_LED_CHANNEL, 0x04);
 				 vTaskDelay(pdMS_TO_TICKS(167));
-				 XGpio_DiscreteWrite(&Red_RGBInst, 1, 0x00);
+				 XGpio_DiscreteWrite(&Red_RGBInst, RGB_LED_CHANNEL, 0x00);
 				 vTaskDelay(pdMS_TO_TICKS(167));
 			 }
  
