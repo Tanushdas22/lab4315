@@ -512,6 +512,7 @@ volatile _Bool emergencyStopLatched = FALSE;
 					(void)XUartPs_ReadReg(XPAR_XUARTPS_0_BASEADDR, XUARTPS_FIFO_OFFSET);
 				}
 				if(Stepper_motionComplete()){
+                    vTaskDelay(100);
 					Stepper_disableMotor();
 				}
 				 XGpio_DiscreteWrite(&Red_RGBInst, RGB_LED_CHANNEL, 0x04);
