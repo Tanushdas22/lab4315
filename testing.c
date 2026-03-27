@@ -88,6 +88,7 @@
  int positionSequence[SEQUENCE_LENGTH][2] = {{NO_OF_STEPS_PER_REVOLUTION_FULL_DRIVE, 0}}; // position-delay array
  int sequenceIndex = 0; // the number of position-delay sequences
  int loop_count = 1; // the number of times to repeat the position-delay sequence
+volatile _Bool emergencyStopLatched = FALSE;
  
  //----------------------------------------------------
  // MAIN FUNCTION
@@ -500,10 +501,19 @@
 			 //Inside an infinite loop, flash the Red light on RGB led at 2Hz.
 			 //The Object Instance for RGB led is "Red_RGBInst".
  
-			 Stepper_SetupStop();
+			emergencyStopLatched = TRUE;
+			Stepper_SetupStop();
 			 sequenceIndex = 0;
+			vTaskSuspend(xUarttask); // stop CLI task from accepting further input
  
 			 while(1){
+				// Discard any characters still arriving on UART after emergency stop.
+				while(XUartPs_IsReceiveData(XPAR_XUARTPS_0_BASEADDR)){
+					(void)XUartPs_ReadReg(XPAR_XUARTPS_0_BASEADDR, XUARTPS_FIFO_OFFSET);
+				}
+				if(Stepper_motionComplete()){
+					Stepper_disableMotor();
+				}
 				 XGpio_DiscreteWrite(&Red_RGBInst, RGB_LED_CHANNEL, 0x04);
 				 vTaskDelay(pdMS_TO_TICKS(167));
 				 XGpio_DiscreteWrite(&Red_RGBInst, RGB_LED_CHANNEL, 0x00);
